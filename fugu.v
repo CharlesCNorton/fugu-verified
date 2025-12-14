@@ -34,7 +34,9 @@ Set Implicit Arguments.
 Inductive Part := Flesh | Skin | Liver | Ovaries | Intestines.
 Inductive Tool := Knife | Board | Plate | Trash.
 
-Parameter skin_is_lethal : bool.
+Section WithSkinToxicity.
+
+Variable skin_is_lethal : bool.
 
 Definition lethal_part (p : Part) : bool :=
   match p with
@@ -550,3 +552,37 @@ Proof.
   apply hygienic_iff_edible.
   apply toxic_trim_discard_wash_serve_is_hygienic.
 Qed.
+
+(** Negative witnesses: unsafe sequences are correctly rejected. *)
+
+Example unsafe_no_wash_not_hygienic :
+  ~hygienic [Cut Liver; Cut Flesh].
+Proof.
+  unfold hygienic.
+  intros [kd [bd [pd [td H]]]].
+  simpl in H.
+  discriminate.
+Qed.
+
+Example unsafe_no_wash_is_lethal :
+  edible (run clean_state [Cut Liver; Cut Flesh]) = false.
+Proof.
+  reflexivity.
+Qed.
+
+Example unsafe_dirty_transfer_not_hygienic :
+  ~hygienic [Cut Liver; Transfer Knife Plate].
+Proof.
+  unfold hygienic.
+  intros [kd [bd [pd [td H]]]].
+  simpl in H.
+  discriminate.
+Qed.
+
+Example unsafe_dirty_transfer_is_lethal :
+  edible (run clean_state [Cut Liver; Transfer Knife Plate]) = false.
+Proof.
+  reflexivity.
+Qed.
+
+End WithSkinToxicity.
