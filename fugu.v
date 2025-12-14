@@ -220,7 +220,7 @@ Definition step (s : State) (a : Action) : State :=
       let any_dirty := knife_dirty st || board_dirty st || hands_dirty st in
       let kbh := any_dirty || lp in
       let st' := {| knife_dirty := kbh; board_dirty := kbh;
-                    plate_dirty := plate_dirty st; hands_dirty := kbh |} in
+                    plate_dirty := plate_dirty st || lp; hands_dirty := kbh |} in
       let ed := get_edible s sid in
       let ed' :=
         if lp then ed
@@ -481,7 +481,7 @@ Fixpoint policy_check (acts : list Action) (ps : PolicyState) : option PolicySta
       let bd := ps_get_tool ps sid Board in
       let hd := ps_get_tool ps sid Hands in
       if lethal_part p
-      then let ps' := ps_set_tool sid Hands true (ps_set_tool sid Board true (ps_set_tool sid Knife true ps)) in
+      then let ps' := ps_set_tool sid Plate true (ps_set_tool sid Hands true (ps_set_tool sid Board true (ps_set_tool sid Knife true ps))) in
            policy_check rest ps'
       else if kd || bd || hd then None
            else if ps_all_toxic_discarded ps then policy_check rest ps
@@ -582,7 +582,7 @@ Lemma step_cut_lethal_matches :
     state_matches_policy s ps ->
     lethal_part p = true ->
     state_matches_policy (step s (Cut sid p))
-      (ps_set_tool sid Hands true (ps_set_tool sid Board true (ps_set_tool sid Knife true ps))).
+      (ps_set_tool sid Plate true (ps_set_tool sid Hands true (ps_set_tool sid Board true (ps_set_tool sid Knife true ps)))).
 Proof.
   intros s ps sid p Hm Hlp.
   destruct Hm as [H1 [H2 [H3 [H4 [H5 [H6 [H7 [H8 [H9 [H10 [H11 [H12 [H13 [H14 H15]]]]]]]]]]]]]].
@@ -633,10 +633,12 @@ Proof.
   - rewrite Hlp.
     rewrite H1, H2, H4, Hk, Hb, Hh. simpl.
     rewrite Htox'. simpl.
+    rewrite Bool.orb_false_r.
     repeat split; try reflexivity; try assumption.
   - rewrite Hlp.
     rewrite H5, H6, H8, Hk, Hb, Hh. simpl.
     rewrite Htox'. simpl.
+    rewrite Bool.orb_false_r.
     repeat split; try reflexivity; try assumption.
 Qed.
 
@@ -774,7 +776,7 @@ Lemma policy_cut_lethal_step :
     state_matches_policy s ps ->
     lethal_part p = true ->
     state_matches_policy (step s (Cut sid p))
-      (ps_set_tool sid Hands true (ps_set_tool sid Board true (ps_set_tool sid Knife true ps))).
+      (ps_set_tool sid Plate true (ps_set_tool sid Hands true (ps_set_tool sid Board true (ps_set_tool sid Knife true ps)))).
 Proof.
   exact step_cut_lethal_matches.
 Qed.
@@ -1094,9 +1096,10 @@ Proof.
       * exact Hpc.
     + simpl in Hpc.
       destruct (lethal_part p) eqn:Hlp.
-      * apply IH with (ps := ps_set_tool sid Hands true
-                              (ps_set_tool sid Board true
-                                (ps_set_tool sid Knife true ps))).
+      * apply IH with (ps := ps_set_tool sid Plate true
+                              (ps_set_tool sid Hands true
+                                (ps_set_tool sid Board true
+                                  (ps_set_tool sid Knife true ps)))).
         -- apply policy_cut_lethal_step. exact Hm. exact Hlp.
         -- exact Hpc.
       * destruct (ps_get_tool ps sid Knife || ps_get_tool ps sid Board ||
@@ -1308,7 +1311,7 @@ Example single_station_hygienic_skin_safe :
   hygienic false [Cut S1 Liver; Discard S1 Liver;
                   Cut S1 Ovaries; Discard S1 Ovaries;
                   Cut S1 Intestines; Discard S1 Intestines;
-                  Wash S1 Knife; Wash S1 Board; Wash S1 Hands;
+                  Wash S1 Knife; Wash S1 Board; Wash S1 Plate; Wash S1 Hands;
                   Cut S1 Flesh; Transfer S1 Board Plate].
 Proof.
   unfold hygienic.
@@ -1321,7 +1324,7 @@ Example single_station_hygienic_skin_toxic :
                  Cut S1 Ovaries; Discard S1 Ovaries;
                  Cut S1 Intestines; Discard S1 Intestines;
                  Cut S1 Skin; Discard S1 Skin;
-                 Wash S1 Knife; Wash S1 Board; Wash S1 Hands;
+                 Wash S1 Knife; Wash S1 Board; Wash S1 Plate; Wash S1 Hands;
                  Cut S1 Flesh; Transfer S1 Board Plate].
 Proof.
   unfold hygienic.
@@ -1353,8 +1356,8 @@ Example parallel_stations_hygienic :
   hygienic false [Cut S1 Liver; Discard S1 Liver;
                   Cut S1 Ovaries; Discard S1 Ovaries;
                   Cut S1 Intestines; Discard S1 Intestines;
-                  Wash S1 Knife; Wash S1 Board; Wash S1 Hands;
-                  Wash S2 Knife; Wash S2 Board; Wash S2 Hands;
+                  Wash S1 Knife; Wash S1 Board; Wash S1 Plate; Wash S1 Hands;
+                  Wash S2 Knife; Wash S2 Board; Wash S2 Plate; Wash S2 Hands;
                   Cut S1 Flesh; Transfer S1 Board Plate;
                   Cut S2 Flesh; Transfer S2 Board Plate].
 Proof.
