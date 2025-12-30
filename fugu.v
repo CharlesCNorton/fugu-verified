@@ -4,7 +4,7 @@
 (*                                                                            *)
 (*     Models toxin contamination across fugu parts (flesh/skin vs.           *)
 (*     liver/ovaries/intestines) and kitchen tools across multiple stations.  *)
-(*                                                                            *)                                                                           *)
+(*                                                                            *)
 (*     "I want to eat fugu, but I don't want to die."                         *)
 (*     - Japanese Proverb                                                     *)
 (*                                                                            *)
